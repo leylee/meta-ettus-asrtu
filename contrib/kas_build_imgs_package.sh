@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #
 # Copyright 2021 Ettus Research, a National Instruments Brand
 #
@@ -20,6 +20,7 @@ fi
 
 _requested_device=$1
 _kas_config=$META_ETTUS_DIR/kas/$_requested_device.yml
+_build_dir="build/tmp-glibc"
 
 _artifact_name="git"
 if [[ $# -ge 2 ]]; then
@@ -33,7 +34,7 @@ _image=gnuradio-image
 export MENDER_ARTIFACT_NAME=$_artifact_name
 
 echo "Launching build ($_image)..."
-kas build $_kas_config
+# kas build $_kas_config
 if [ $? != 0 ]; then
 	echo "Build was not successful, stopping script"
 	exit 1
@@ -42,7 +43,11 @@ fi
 ## SDK ################################################################
 if [ ! -z $_sdk_pkg_name ]; then
 	echo "Launching build (SDK for $_image)..."
-	kas shell $_kas_config -c "bitbake $_image -cpopulate_sdk"
+#	kas shell $_kas_config -c "bitbake $_image -cpopulate_sdk"
 fi
-
-$META_ETTUS_DIR/contrib/create_packages.sh $_requested_device $_build_dir/deploy $_image $_build_dir/deploy
+echo "PWD is $PWD"
+echo "$META_ETTUS_DIR/contrib/create_packages.sh $_requested_device $_artifact_name $_image $_build_dir/deploy"
+echo "press enter to continue"
+read confirm
+unset confirm
+$META_ETTUS_DIR/contrib/create_packages.sh $_requested_device $_artifact_name $_image $_build_dir/deploy

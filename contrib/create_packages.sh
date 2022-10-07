@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 #
 # Copyright 2021 Ettus Research, a National Instruments Brand
 #
@@ -149,13 +149,17 @@ if [ ! -z $_sdk_pkg_name ]; then
 		rm $TMP_DIR/*
 	fi
 fi
-
-if [! -d "$_deploy_dir/sources" ]; then
+echo $_deploy_dir
+if [ ! -d "$_deploy_dir/sources" ]; then
 	echo "WARNING: Could not find Sources!"
 else
 	echo "Found Sources in: $_deploy_dir/sources. Files:"
 	ls $_deploy_dir/sources
 	echo "Zipping up Sources..."
+	echo "DEBUG:PWD is " $PWD
+	echo "will run zip -r $_rootpath/$DST_DIR/$_sources_pkg_name ."
+	echo "Press enter to continue"
+	read 
 	_rootpath=`pwd`
 	pushd $_deploy_dir/sources
 	zip -r $_rootpath/$DST_DIR/$_sources_pkg_name .
