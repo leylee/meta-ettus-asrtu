@@ -1,0 +1,95 @@
+From 2cca75155baec8358939e2aae822e256bed4cfe0 Mon Sep 17 00:00:00 2001
+From: Khem Raj <raj.khem@gmail.com>
+Date: Sat, 21 Dec 2019 20:05:48 -0800
+Subject: qemu: Replace stime() API with clock_settime
+
+Signed-off-by: Khem Raj <raj.khem@gmail.com>
+Signed-off-by: Richard Purdie <richard.purdie@linuxfoundation.org>
+---
+ meta/recipes-devtools/qemu/qemu.inc                |  1 +
+ ...0011-linux-user-remove-host-stime-syscall.patch | 61 ++++++++++++++++++++++
+ 2 files changed, 62 insertions(+)
+ create mode 100644 meta/recipes-devtools/qemu/qemu/0011-linux-user-remove-host-stime-syscall.patch
+
+diff --git a/meta/recipes-devtools/qemu/qemu.inc b/meta/recipes-devtools/qemu/qemu.inc
+index 993ca90cf5..dff5762b80 100644
+--- a/meta/recipes-devtools/qemu/qemu.inc
++++ b/meta/recipes-devtools/qemu/qemu.inc
+@@ -27,6 +27,7 @@ SRC_URI = "https://download.qemu.org/${BPN}-${PV}.tar.xz \
+            file://0008-linux-user-Fix-webkitgtk-hangs-on-32-bit-x86-target.patch \
+            file://0009-Fix-webkitgtk-builds.patch \
+            file://0010-configure-Add-pkg-config-handling-for-libgcrypt.patch \
++           file://0011-linux-user-remove-host-stime-syscall.patch \
+            file://CVE-2019-15890.patch \
+            file://CVE-2019-12068.patch \
+            "
+diff --git a/meta/recipes-devtools/qemu/qemu/0011-linux-user-remove-host-stime-syscall.patch b/meta/recipes-devtools/qemu/qemu/0011-linux-user-remove-host-stime-syscall.patch
+new file mode 100644
+index 0000000000..659e6be45d
+--- /dev/null
++++ b/meta/recipes-devtools/qemu/qemu/0011-linux-user-remove-host-stime-syscall.patch
+@@ -0,0 +1,61 @@
++From 0f1f2d4596aee037d3ccbcf10592466daa54107f Mon Sep 17 00:00:00 2001
++From: Laurent Vivier <laurent@vivier.eu>
++Date: Tue, 12 Nov 2019 15:25:56 +0100
++Subject: [PATCH] linux-user: remove host stime() syscall
++
++stime() has been withdrawn from glibc
++(12cbde1dae6f "Use clock_settime to implement stime; withdraw stime.")
++
++Implement the target stime() syscall using host
++clock_settime(CLOCK_REALTIME, ...) as it is done internally in glibc.
++
++Tested qemu-ppc/x86_64 with:
++
++	#include <time.h>
++	#include <stdio.h>
++
++	int main(void)
++	{
++		time_t t;
++		int ret;
++
++		/* date -u -d"2019-11-12T15:11:00" "+%s" */
++		t = 1573571460;
++		ret = stime(&t);
++		printf("ret %d\n", ret);
++		return 0;
++	}
++
++        # date; ./stime; date
++        Tue Nov 12 14:18:32 UTC 2019
++        ret 0
++        Tue Nov 12 15:11:00 UTC 2019
++
++Upstream-Status: Backport [https://git.qemu.org/?p=qemu.git;a=commit;h=0f1f2d4596aee037d3ccbcf10592466daa54107f]
++Buglink: https://bugs.launchpad.net/qemu/+bug/1852115
++Reported-by: Cole Robinson <crobinso@redhat.com>
++Signed-off-by: Laurent Vivier <laurent@vivier.eu>
++Reviewed-by: Peter Maydell <peter.maydell@linaro.org>
++Message-Id: <20191112142556.6335-1-laurent@vivier.eu>
++---
++ linux-user/syscall.c | 8 +++++---
++ 1 file changed, 5 insertions(+), 3 deletions(-)
++
++--- a/linux-user/syscall.c
+++++ b/linux-user/syscall.c
++@@ -7651,10 +7651,12 @@ static abi_long do_syscall1(void *cpu_en
++ #ifdef TARGET_NR_stime /* not on alpha */
++     case TARGET_NR_stime:
++         {
++-            time_t host_time;
++-            if (get_user_sal(host_time, arg1))
+++            struct timespec ts;
+++            ts.tv_nsec = 0;
+++            if (get_user_sal(ts.tv_sec, arg1)) {
++                 return -TARGET_EFAULT;
++-            return get_errno(stime(&host_time));
+++            }
+++            return get_errno(clock_settime(CLOCK_REALTIME, &ts));
++         }
++ #endif
++ #ifdef TARGET_NR_alarm /* not on alpha */
+-- 
+cgit v1.2
+
