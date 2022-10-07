@@ -7,3 +7,4 @@
 /meta-sdr/
 /meta-mender/
 /*.zip
+/venv/
