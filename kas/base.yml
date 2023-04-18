@@ -50,6 +50,9 @@ repos:
       patch3:
         repo: meta-ettus
         path: kas/patches/oe-core/0003-linux-user-remove-host-stime-syscall.patch
+      patch4:
+        repo: meta-ettus
+        path: kas/patches/oe-core/0004-update-xilinx_can-driver.patch
   meta-mender:
     url: https://github.com/mendersoftware/meta-mender
     refspec: 8c451e26aa867ec62f8e8a3db30a3ab2cce6ef83
