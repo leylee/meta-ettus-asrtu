@@ -5,4 +5,6 @@ SRC_URI_prepend_ni-e31x = " \
     file://0002-configs-ni_e31x_sg-1-3-Added-network-commands-dhcp-t.patch \
     file://0003-configs-ni_e31x_sg-1-3-add-CONFIG_USE_BOOTCOMMAND.patch \
     file://0004-configs-ni_e31x-Add-tftp-port-selection.patch \
+    file://0005-edit-dts-for-can0.patch \
+    file://0005-edit-register-for-can.patch \
     "
